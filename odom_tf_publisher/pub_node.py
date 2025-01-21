@@ -11,8 +11,8 @@ class OdomTFPublisher(Node):
     def __init__(self):
         super().__init__('odom_tf_publisher')
 
-        self.odom_frame = self.declare_parameter('odom_frame', 'odom').get_parameter_value().string_value
-        self.robot_frame = self.declare_parameter('robot_frame', 'base_link').get_parameter_value().string_value
+        self.odom_frame = self.declare_parameter('odom_frame', '').get_parameter_value().string_value
+        self.robot_frame = self.declare_parameter('robot_frame', '').get_parameter_value().string_value
         self.fix_timestamp = self.declare_parameter('fix_timestamp', False).get_parameter_value().bool_value
 
         self.tf_broadcaster = TransformBroadcaster(self)
@@ -21,9 +21,10 @@ class OdomTFPublisher(Node):
 
     def msg_cb(self, data: Odometry):
         t = TransformStamped()
+        
         t.header.stamp = self.get_clock().now().to_msg() if self.fix_timestamp else data.header.stamp
-        t.header.frame_id = self.odom_frame
-        t.child_frame_id = self.robot_frame
+        t.header.frame_id = self.odom_frame if self.odom_frame != '' else data.header.frame_id
+        t.child_frame_id = self.robot_frame if self.robot_frame != '' else data.child_frame_id
 
         t.transform.translation.x = data.pose.pose.position.x
         t.transform.translation.y = data.pose.pose.position.y
